@@ -21,35 +21,64 @@ def detail(request,id):
 
 #add movies to database
 def add_movies(request):
-    if request.method == "POST":
-        form = MovieForm(request.POST or None)
+    #check if user is authenticated
+    if request.user.is_authenticated:
+        #check if the user is superuser
+        if request.user.is_superuser:
+            if request.method == "POST":
+                form = MovieForm(request.POST or None)
 
-        if form.is_valid():
-            data = form.save(commit=False)
-            data.save()
+                if form.is_valid():
+                    data = form.save(commit=False)
+                    data.save()
+                    return redirect("review:home")
+            else:
+                form = MovieForm()
+            return render(request,'review/addmovies.html',{'form':form, "controller":"Add Movies"})
+        #if the user is not superuser 
+        else:
             return redirect("review:home")
-    else:
-        form = MovieForm()
-    return render(request,'review/addmovies.html',{'form':form, "controller":"Add Movies"})
+
+    #if the user is not logged in
+    return redirect("accounts:login")
+
 
 #Edit movie
 def edit_movies(request,id):
-    movie = Movie.objects.get(id=id)
+    if request.user.is_authenticated:
+        #check if the user is superuser
+        if request.user.is_superuser:
+            movie = Movie.objects.get(id=id)
 
-    if request.method == "POST":
-        form = MovieForm(request.POST or None, instance = movie)
+            if request.method == "POST":
+                form = MovieForm(request.POST or None, instance = movie)
 
-        if form.is_valid():
-            data = form.save(commit=False)
-            data.save()
-            return redirect("review:detail", id)
-    else:
-        form = MovieForm(instance = movie)
-    return render(request,'review/addmovies.html',{'form':form, "controller":"Edit Movies"})
+                if form.is_valid():
+                    data = form.save(commit=False)
+                    data.save()
+                    return redirect("review:detail", id)
+            else:
+                form = MovieForm(instance = movie)
+            return render(request,'review/addmovies.html',{'form':form, "controller":"Edit Movies"})
+        else:
+            return redirect("review:home")
+
+    #if the user is not logged in
+    return redirect("accounts:login")
 
 #delete Movie
 def delete_movies(request,id):
-    movie = Movie.objects.get(id=id)
-    movie.delete()
-    return redirect("review:home")
+    if request.user.is_authenticated:
+        #check if the user is superuser
+        if request.user.is_superuser:
+            movie = Movie.objects.get(id=id)
+            movie.delete()
+            return redirect("review:home")
+
+        else:
+            return redirect("review:home")
+
+    #if the user is not logged in
+    return redirect("accounts:login")
+
 
